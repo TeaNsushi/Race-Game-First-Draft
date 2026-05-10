@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Neon Racer</title>
     <style>
         :root {
@@ -26,7 +26,7 @@
         #game-container {
             position: relative;
             width: 100vw;
-            height: 100dvh; /* FIXED: Dynamic viewport height for iOS */
+            height: 100dvh; 
             display: flex;
             justify-content: center;
             align-items: center;
@@ -87,31 +87,33 @@
         /* Mobile Controls */
         #controls {
             position: absolute;
-            bottom: 50px; /* FIXED: Bumped up slightly for comfort */
+            /* FIXED: Uses "safe-area-inset" to stay above the iPhone Home Bar */
+            bottom: calc(100px + env(safe-area-inset-bottom)); 
             width: 100%;
             display: flex;
             justify-content: space-around;
-            padding: 0 20px;
+            padding: 0 30px;
             box-sizing: border-box;
-            z-index: 20; /* FIXED: Ensures buttons sit above the canvas */
+            z-index: 20;
         }
 
         .ctrl-btn {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 2px solid var(--neon-blue);
+            width: 90px; /* Slightly larger for easier hitting */
+            height: 90px;
+            background: rgba(0, 243, 255, 0.15); /* More visible background */
+            border: 3px solid var(--neon-blue);
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: var(--neon-blue);
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         @media (min-width: 768px) {
-            #controls { display: none; } /* Hide on desktop */
+            #controls { display: none; }
         }
     </style>
 </head>
@@ -122,21 +124,18 @@
     
     <canvas id="gameCanvas"></canvas>
 
-    <!-- Start Screen -->
     <div id="start-screen" class="overlay">
         <h1>NEON RACER</h1>
         <p>Avoid the obstacles!</p>
         <button onclick="startGame()">Start Race</button>
     </div>
 
-    <!-- Game Over Screen -->
     <div id="game-over" class="overlay hidden">
         <h1 style="color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink);">CRASHED!</h1>
         <p id="final-score">Final Score: 0</p>
         <button onclick="startGame()">Retry</button>
     </div>
 
-    <!-- Mobile Buttons -->
     <div id="controls">
         <div class="ctrl-btn" id="btn-left">◀</div>
         <div class="ctrl-btn" id="btn-right">▶</div>
@@ -151,7 +150,6 @@
     const gameOverScreen = document.getElementById('game-over');
     const finalScoreText = document.getElementById('final-score');
 
-    // Configuration
     const laneWidth = 80;
     const roadWidth = laneWidth * 3;
     canvas.width = 400;
@@ -175,7 +173,6 @@
 
     let obstacles = [];
 
-    // Keyboard Controls
     window.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft') player.moveLeft = true;
         if (e.key === 'ArrowRight') player.moveRight = true;
@@ -185,7 +182,6 @@
         if (e.key === 'ArrowRight') player.moveRight = false;
     });
 
-    // Touch Controls (FIXED: Passive listeners and touchcancel)
     const setupTouch = (id, property) => {
         const btn = document.getElementById(id);
         
@@ -225,13 +221,11 @@
 
     function drawCar(x, y, w, h, color, isPlayer) {
         ctx.fillStyle = color;
-        // Simple rectangular car with neon glow
         ctx.shadowBlur = 15;
         ctx.shadowColor = color;
         ctx.fillRect(x, y, w, h);
-        ctx.shadowBlur = 0; // Reset blur for other elements
+        ctx.shadowBlur = 0;
         
-        // Car detail (windshield)
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
         ctx.fillRect(x + 5, isPlayer ? y + 10 : y + 25, w - 10, 15);
     }
@@ -239,7 +233,6 @@
     function update() {
         if (!gameActive) return;
 
-        // Player movement
         if (player.moveLeft && player.x > (canvas.width - roadWidth) / 2) {
             player.x -= player.speed;
         }
@@ -247,19 +240,16 @@
             player.x += player.speed;
         }
 
-        // Difficulty scaling
         frameCount++;
         if (frameCount % 100 === 0) {
             spawnObstacle();
             score += 10;
-            if (speed < 15) speed += 0.2; // Slowly get faster
+            if (speed < 15) speed += 0.2;
         }
 
-        // Obstacles movement & collision
         obstacles.forEach((obs, index) => {
             obs.y += speed;
 
-            // Collision Check (AABB)
             if (player.x < obs.x + obs.width &&
                 player.x + player.width > obs.x &&
                 player.y < obs.y + obs.height &&
@@ -267,7 +257,6 @@
                 endGame();
             }
 
-            // Remove off-screen obstacles
             if (obs.y > canvas.height) {
                 obstacles.splice(index, 1);
             }
@@ -279,11 +268,9 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw Road
         ctx.fillStyle = '#222';
         ctx.fillRect((canvas.width - roadWidth)/2, 0, roadWidth, canvas.height);
         
-        // Road Lines (Dashed)
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.setLineDash([20, 20]);
         ctx.beginPath();
@@ -291,10 +278,8 @@
         ctx.moveTo(canvas.width/2 + laneWidth/2, 0); ctx.lineTo(canvas.width/2 + laneWidth/2, canvas.height);
         ctx.stroke();
 
-        // Draw Player
         drawCar(player.x, player.y, player.width, player.height, player.color, true);
 
-        // Draw Obstacles
         obstacles.forEach(obs => {
             drawCar(obs.x, obs.y, obs.width, obs.height, obs.color, false);
         });
