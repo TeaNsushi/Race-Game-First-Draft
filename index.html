@@ -26,7 +26,7 @@
         #game-container {
             position: relative;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh; /* FIXED: Dynamic viewport height for iOS */
             display: flex;
             justify-content: center;
             align-items: center;
@@ -87,12 +87,13 @@
         /* Mobile Controls */
         #controls {
             position: absolute;
-            bottom: 30px;
+            bottom: 50px; /* FIXED: Bumped up slightly for comfort */
             width: 100%;
             display: flex;
             justify-content: space-around;
             padding: 0 20px;
             box-sizing: border-box;
+            z-index: 20; /* FIXED: Ensures buttons sit above the canvas */
         }
 
         .ctrl-btn {
@@ -174,7 +175,7 @@
 
     let obstacles = [];
 
-    // Controls
+    // Keyboard Controls
     window.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft') player.moveLeft = true;
         if (e.key === 'ArrowRight') player.moveRight = true;
@@ -184,12 +185,25 @@
         if (e.key === 'ArrowRight') player.moveRight = false;
     });
 
-    // Touch Controls
+    // Touch Controls (FIXED: Passive listeners and touchcancel)
     const setupTouch = (id, property) => {
         const btn = document.getElementById(id);
-        btn.addEventListener('touchstart', (e) => { e.preventDefault(); player[property] = true; });
-        btn.addEventListener('touchend', (e) => { e.preventDefault(); player[property] = false; });
+        
+        const startMove = (e) => { 
+            e.preventDefault(); 
+            player[property] = true; 
+        };
+        
+        const stopMove = (e) => { 
+            e.preventDefault(); 
+            player[property] = false; 
+        };
+
+        btn.addEventListener('touchstart', startMove, { passive: false });
+        btn.addEventListener('touchend', stopMove, { passive: false });
+        btn.addEventListener('touchcancel', stopMove, { passive: false }); 
     };
+    
     setupTouch('btn-left', 'moveLeft');
     setupTouch('btn-right', 'moveRight');
 
